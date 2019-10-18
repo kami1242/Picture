@@ -3,6 +3,10 @@ from random import randrange as rnd, choice
 import math
 import time
 
+#----------------------------------------user init
+username = input('Type in your username:')
+#----------------------------------------
+
 root = Tk()
 root.geometry('800x600')
 canv = Canvas(root,bg='white')
@@ -88,9 +92,41 @@ new_ball()
 new_ball()
 new_rect()
 new_rect()
-print(rects)
     
 update()
 canv.bind('<Button-1>', click)
 
 root.mainloop()
+
+#----------------------------------------save scores-----------------------------
+
+scoretable = {}
+
+file = open('scores', 'r')
+for line in file:
+    fields = line.split()
+    scoretable[fields[0]] = int(fields[1])
+file.close()
+
+print(scoretable)
+
+if username in scoretable:
+    if points > scoretable[username]:
+        scoretable[username] = points
+else:
+    scoretable[username] = points
+
+print(scoretable)
+
+printer = open('scores', 'w')
+for name in scoretable:
+    printer.write(name + ' ' + str(scoretable[name]) + '\n')
+printer.close()
+
+
+
+
+
+
+
+
