@@ -2,78 +2,67 @@ from tkinter import *
 from random import randrange as rnd, choice
 import math
 import time
+from Ball import *
+from Rect import *
 
-#----------------------------------------user init
-username = input('Type in your username:')
-#----------------------------------------
-
-root = Tk()
-root.geometry('800x600')
-canv = Canvas(root,bg='white')
-canv.pack(fill=BOTH,expand=1)
+username = ''
 points = 0 #user's points
 n = 5 #number of the balls
-balls = []
+balls = []  
 rects = []
-
-class Ball:
-    def __init__(self):
-        self.x = rnd(100, 700)
-        self.y = rnd(100, 500)
-        self.r = rnd(30, 50)
-        self.vx = rnd(10) - 5
-        self.vy = rnd(10) - 5
-        self.color = choice(['red', 'orange', 'yellow', 'green', 'blue'])
-        self.circle = canv.create_oval(self.x - self.r, self.y - self.r, self.x + self.r, self.y + self.r, fill = self.color, width=0)
-    def update(self):
-        global canv
-        if self.x > 700:
-            self.vx = -abs(self.vx)
-        if self.x < 100:
-            self.vx = abs(self.vx)
-        if self.y > 500:
-            self.vy = -abs(self.vy)
-        if self.y < 100:
-            self.vy = abs(self.vy)
-        self.x += self.vx
-        self.y += self.vy
-        canv.move(self.circle, self.vx, self.vy)
-
-class Rect:
-    def __init__(self):
-        self.x = rnd(100, 700)
-        self.y = rnd(100, 500)
-        self.a = rnd(30, 50)
-        self.vx = rnd(30) - 15
-        self.vy = rnd(30) - 15
-        self.rect = canv.create_rectangle(self.x, self.y, self.x + self.a, self.y + self.a, fill = 'black')
-    def update(self):
-        global canv
-        self.vx += rnd(30) - 15 - (self.x - 400)*abs((self.x - 400))*0.0002 - 0.2*self.vx
-        self.vy += rnd(30) - 15 - (self.y - 300)*abs((self.y - 300))*0.0002 - 0.2*self.vy
-        self.x += self.vx
-        self.y += self.vy
-        canv.move(self.rect, self.vx, self.vy)
 
 def dist(x1, y1, x2, y2): #returns distance between two points
     return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
 
+def savescore():
+    global username
+    global points
+    scoretable = {}
+
+    file = open('scores', 'r')
+    for line in file:
+        fields = line.split()
+        scoretable[fields[0]] = int(fields[1])
+    file.close()
+
+    print(scoretable)
+
+    if username in scoretable:
+        if points > scoretable[username]:
+            scoretable[username] = points
+    else:
+        scoretable[username] = points
+
+    print(scoretable)
+
+    printer = open('scores', 'w')
+    for name in scoretable:
+        printer.write(name + ' ' + str(scoretable[name]) + '\n')
+    printer.close()
+
 def new_ball():
-    balls.append(Ball())
+    global canv
+    balls.append(Ball(canv))
 
 def new_rect():
-    rects.append(Rect())
+    global canv
+    rects.append(Rect(canv))
 
 def update():
+    global canv
+    global scorelabel
+    global points
+    global username
     for b in balls:
-        b.update()
+        b.update(canv)
     for r in rects:
-        r.update()
+        r.update(canv)
+    scorelabel['text'] = username + ': ' +str(points) + ' points'
     root.after(100, update)
 
 def click(event):
-    global points
     global canv
+    global points
     for b in balls:
         if dist(event.x, event.y, b.x, b.y) < b.r:
             points += 1
@@ -88,42 +77,58 @@ def click(event):
             new_rect()
     print(points)
 
-new_ball()
-new_ball()
-new_rect()
-new_rect()
+def main():
+    global canv
+    global points
+    new_ball()
+    new_ball()
+    new_rect()
+    new_rect()
     
-update()
-canv.bind('<Button-1>', click)
+    update()
+    canv.bind('<Button-1>', click)
+
+    root.mainloop()
+
+#----------------------------------------user init------------------------
+
+root = Tk()
+root.geometry('800x600')
+canv = Canvas(root, bg = 'white')
+frame = Frame(root)
+scorelabel = Label(frame, text = '0')
+bsave = Button(frame, text = 'save', command=savescore)
+
+def Enter():
+    global canv
+    global linit
+    global einit
+    global binit
+    global scorelabel
+    global username
+    username = einit.get()
+    linit.destroy()
+    einit.destroy()
+    binit.destroy()
+    #quit()
+    canv.pack(fill = BOTH, expand = 1)
+    canv.create_rectangle(50, 50, 750, 550, outline='black')
+    frame.pack(side=BOTTOM)
+    scorelabel.pack(side=LEFT)
+    bsave.pack(anchor = E)
+    main()
+
+linit = Label(text="Enter your name:")#.grid(row=0)
+einit = Entry(width=20)#.grid(row=0, column=1)
+binit = Button(text='Enter', command=Enter)#.grid(row=0, column=2)
+
+linit.pack(side=LEFT)
+einit.pack(side=LEFT)
+binit.pack(side=LEFT)
 
 root.mainloop()
 
-#----------------------------------------save scores-----------------------------
-
-scoretable = {}
-
-file = open('scores', 'r')
-for line in file:
-    fields = line.split()
-    scoretable[fields[0]] = int(fields[1])
-file.close()
-
-print(scoretable)
-
-if username in scoretable:
-    if points > scoretable[username]:
-        scoretable[username] = points
-else:
-    scoretable[username] = points
-
-print(scoretable)
-
-printer = open('scores', 'w')
-for name in scoretable:
-    printer.write(name + ' ' + str(scoretable[name]) + '\n')
-printer.close()
-
-
+savescore()
 
 
 
