@@ -151,8 +151,8 @@ class Target():
 
     def new_target(self):
         """ Инициализация новой цели. """
-        self.x = rnd(600, 780)
-        self.y = rnd(300, 550)
+        self.x = rnd(600, 750)
+        self.y = rnd(300, 500)
         self.r = rnd(2, 50)
         color = self.color = 'red'
         canv.coords(self.id, self.x - self.r, self.y - self.r, self.x + self.r, self.y + self.r)
@@ -161,6 +161,7 @@ class Target():
     def hit(self, points=1):
         """Попадание шарика в цель."""
         canv.coords(self.id, -10, -10, -10, -10)
+        #canv.delete(self.id)
         self.points += points
         canv.itemconfig(self.id_points, text=self.points)
         ########################################################################3
@@ -168,7 +169,7 @@ class Target():
 
 t1 = Target()
 screen1 = canv.create_text(400, 300, text='', font='28')
-g1 = Gun()
+gun = Gun()
 bullet = 0
 balls = []
 
@@ -178,9 +179,9 @@ def new_game(event=''):
     t1.new_target()
     bullet = 0
     balls = []
-    canv.bind('<Button-1>', g1.fire2_start)
-    canv.bind('<ButtonRelease-1>', g1.fire2_end)
-    canv.bind('<Motion>', g1.targetting)
+    canv.bind('<Button-1>', gun.fire2_start)
+    canv.bind('<ButtonRelease-1>', gun.fire2_end)
+    canv.bind('<Motion>', gun.targetting)
 
     z = 0.03
     t1.live = 1
@@ -195,13 +196,12 @@ def new_game(event=''):
                 canv.itemconfig(screen1, text='Вы уничтожили цель за ' + str(bullet) + ' выстрелов')
         canv.update()
         time.sleep(0.03)
-        g1.targetting()
-        g1.power_up()
+        gun.targetting()
+        gun.power_up()
     canv.itemconfig(screen1, text='')
     canv.delete(gun)
     root.after(750, new_game)
 
-
 new_game()
 
-mainloop()
+root.mainloop()
