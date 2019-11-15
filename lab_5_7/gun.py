@@ -3,7 +3,15 @@ import tkinter as tk
 import math
 import time
 
-# print (dir(math))
+paused = False
+
+def pause():
+    global paused
+    if paused:
+        paused = False
+    else:
+        paused = True
+    print(paused)
 
 root = tk.Tk()
 fr = tk.Frame(root)
@@ -13,6 +21,13 @@ canv.pack(fill=tk.BOTH, expand=1)
 g = 1.0
 points = 0
 textpoints = canv.create_text(30,30,text = points,font = '28')
+frame = tk.Frame(root)
+bexit = tk.Button(frame, text = 'Выход', command=root.destroy)
+bpause = tk.Button(frame, text = 'Пауза', command=pause)
+
+frame.pack(side=tk.BOTTOM)
+bexit.pack(anchor = tk.E)
+bpause.pack(anchor = tk.W)
 
 def dist(x1, y1, x2, y2): #returns distance between two points
     return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
@@ -94,7 +109,9 @@ class Gun():
         self.id = canv.create_line(self.x, self.y, self.x + 30, self.y - 30, width=7) 
 
     def fire2_start(self, event):
-        self.f2_on = 1
+        global paused
+        if not paused:
+            self.f2_on = 1
 
     def fire2_end(self, event):
         """Выстрел мячом.
@@ -103,15 +120,17 @@ class Gun():
         Начальные значения компонент скорости мяча vx и vy зависят от положения мыши.
         """
         global balls, shots
-        shots += 1
-        new_ball = Ball(self.x, self.y)
-        new_ball.r += 5
-        self.angle = math.atan((event.y-new_ball.y) / (event.x-new_ball.x))
-        new_ball.vx = self.f2_power * math.cos(self.angle)
-        new_ball.vy = - self.f2_power * math.sin(self.angle)
-        balls.append(new_ball)
-        self.f2_on = 0
-        self.f2_power = 10
+        global paused
+        if not paused:
+            shots += 1
+            new_ball = Ball(self.x, self.y)
+            new_ball.r += 5
+            self.angle = math.atan((event.y-new_ball.y) / (event.x-new_ball.x))
+            new_ball.vx = self.f2_power * math.cos(self.angle)
+            new_ball.vy = - self.f2_power * math.sin(self.angle)
+            balls.append(new_ball)
+            self.f2_on = 0
+            self.f2_power = 10
 
     def targetting(self, event=0):
         """Прицеливание. Зависит от положения мыши."""
@@ -199,7 +218,6 @@ class Target():
 
     def hitgun(self, gun):
         if dist(self.x, self.y, gun.x, gun.y) < self.r:
-            print('hitflag')
             return True
         else:
             return False
@@ -230,7 +248,7 @@ def fromScratch():
 
 
 def new_game(event=''):
-    global gun, tars, screen1, balls, shots, points, textpoints, numberoftargets
+    global gun, tars, screen1, balls, shots, points, textpoints, numberoftargets, paused, bexit
     for t in tars:
         t.new_target()
     tars.append(Target())
@@ -248,34 +266,36 @@ def new_game(event=''):
     canv.itemconfig(screen1, text='')
 
     while (numberoftargets > 0 or balls) and alive:
-        print(alive)
-        gun.update()
-        
-        for t in tars:
-            t.update()
-            if t.hitgun(gun):
-                print("flag")
-                canv.itemconfig(screen1, text='GAME OVER')
-                alive = False
-                print(alive)
-                
-        for b in balls:
-            b.update()
+        if paused:
+            bpause.config(text = "Пуск")
+        if not paused:
+            bpause.config(text = "Пауза")
+            gun.update()
+            
             for t in tars:
-                if b.hittest(t) and t.live:
-                    t.live = 0
-                    t.hit()
-                    numberoftargets -= 1
-                    points += 1
-                    canv.itemconfig(textpoints, text=points)
-                    if numberoftargets == 0:
-                        canv.itemconfig(screen1, text='Вы уничтожили цели за ' + str(shots) + ' выстрелов')
-                        
+                t.update()
+                if t.hitgun(gun):
+                    print("flag")
+                    canv.itemconfig(screen1, text='GAME OVER')
+                    alive = False
+                    print(alive)
+                
+            for b in balls:
+                b.update()
+                for t in tars:
+                    if b.hittest(t) and t.live:
+                        t.live = 0
+                        t.hit()
+                        numberoftargets -= 1
+                        points += 1
+                        canv.itemconfig(textpoints, text=points)
+                        if numberoftargets == 0:
+                            canv.itemconfig(screen1, text='Вы уничтожили цели за ' + str(shots) + ' выстрелов')
+            gun.power_up()
+            gun.targetting()
+                
         canv.update()
         time.sleep(0.03)
-        gun.targetting()
-        gun.power_up()
-    #canv.delete(gun
     if alive == False:
         fromScratch()
     root.after(1000, new_game)
